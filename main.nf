@@ -17,6 +17,7 @@ log.info """\
     aligner         : ${params.aligner}
     variant caller  : ${params.variant_caller}
     bqsr            : ${params.bqsr}
+    fastp           : ${params.fastp}
     degraded_dna    : ${params.degraded_dna}
     variant_recalibration: ${params.variant_recalibration}
     identity_analysis: ${params.identity_analysis}
@@ -27,6 +28,11 @@ log.info """\
 if (params.index_genome) {
     include { indexGenome } from './modules/indexGenome'
 }
+
+if (params.fastp) {
+    include {FASTP } from './modules/readTrimming'
+}
+
 if (params.fastqc) {
     include { FASTQC } from './modules/FASTQC'
 }
@@ -92,7 +98,12 @@ workflow {
             }
         }
     read_pairs_ch.view()
-
+    // Run FASTP on read pairs
+    if (params.fastp) {
+        FASTP(read_pairs_ch)
+        read_pairs_ch = (FASTP.out.trimmedreads)
+    }
+    
     // Run FASTQC on read pairs
     if (params.fastqc) {
         FASTQC(read_pairs_ch)

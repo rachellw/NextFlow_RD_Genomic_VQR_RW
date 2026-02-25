@@ -1,0 +1,25 @@
+# Nextflow
+work/
+.nextflow/
+.nextflow.log*
+.trace
+.timeline.html
+.report.html
+flowchart.png
+
+# Results
+results/
+
+# Logs
+*.log
+
+# OS / editor
+.DS_Store
+.vscode
+
+# Data
+        data/genome/
+        data/qsr_vcfs/
+        data/samples/
+        dockerfiles/identityAnalysis/FASTqc/
+        dockerfiles/identityAnalysis/indexGenome/

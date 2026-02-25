@@ -8,7 +8,7 @@ process alignReadsBwaMem {
     } else if (params.platform == 'cloud') {
         label 'process_high'
     }
-    container 'variantvalidator/indexgenome:1.1.0'
+    container 'bioslimcontainers/bwa-samtools:bwa-0.7.17_samtools-1.13'
 
     tag "$sample_id"
 
