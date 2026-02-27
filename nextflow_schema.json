@@ -56,6 +56,13 @@
                     "description": "Flag to indicate if FASTQC should be performed",
                     "default": false
                 },
+                
+                "fastp": {
+                    "type": "boolean",
+                    "description": "Flag to indicate if FASTP should be performed",
+                    "default": false
+                },
+
                 "index_genome": {
                     "type": "boolean",
                     "description": "Index the genome if not already done",
