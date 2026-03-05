@@ -61,8 +61,10 @@ if (params.aligner == 'bwa-mem') {
 }
 if (params.variant_caller == 'haplotype-caller') {
     include { haplotypeCaller } from './modules/haplotypeCaller'
+ } else if  (params.variant_caller == 'DeepVariant') {
+    include { DEEPVARIANT } from './modules/deepVariant'  
 } else {
-    error "Unsupported variant caller: ${params.variant_caller}. Please specify 'haplotype-caller'."
+    error "Unsupported variant caller: ${params.variant_caller}. Please specify 'haplotype-caller' or 'DeepVariant'."
 }
 
 if (params.degraded_dna) {
