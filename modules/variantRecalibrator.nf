@@ -18,7 +18,7 @@ process variantRecalibrator {
     path qsrc_vcf
 
     output:
-    tuple val(sample_id), file("${vcf.baseName}.recalibrated.vcf")
+    tuple val(sample_id), file("${vcf.baseName}.recalibrated.vcf.gz")
 
     script:
     def knownSitesArgsStr = knownSitesArgs.join(' ')
@@ -58,7 +58,8 @@ process variantRecalibrator {
             -tranches-file ${vcf.baseName}.recalibrated_SNP.tranches \
             -recal-file ${vcf.baseName}.recalibrated_SNP.recal \
             -mode SNP \
-            -O ${vcf.baseName}.output_SNP.vcf
+            -O ${vcf.baseName}.output_SNP.vcf.gz
+            gatk IndexFeatureFile -I output_SNP.vcf.gz
         # relaxed parameters for INDELs
         gatk VariantRecalibrator \
             -R "\${genomeFasta}" \
@@ -76,7 +77,8 @@ process variantRecalibrator {
             -tranches-file ${vcf.baseName}.recalibrated_INDEL.tranches \
             -recal-file ${vcf.baseName}.recalibrated_INDEL.recal \
             -mode INDEL \
-            -O ${vcf.baseName}.output_INDEL.vcf
+            -O ${vcf.baseName}.output_INDEL.vcf.gz
+            gatk IndexFeatureFile -I ${vcf.baseName}.output_INDEL.vcf.gz
     else
         echo "Running VQSR for standard DNA (10x+ coverage)"
         # stricter parameters for SNPs and INDELs
@@ -96,7 +98,8 @@ process variantRecalibrator {
             -tranches-file ${vcf.baseName}.recalibrated_SNP.tranches \
             -recal-file ${vcf.baseName}.recalibrated_SNP.recal \
             -mode SNP \
-            -O ${vcf.baseName}.output_SNP.vcf
+            -O ${vcf.baseName}.output_SNP.vcf.gz
+            gatk IndexFeatureFile -I ${vcf.baseName}.output_SNP.vcf.gz
         # stricter parameters for INDELs
         gatk VariantRecalibrator \
             -R "\${genomeFasta}" \
@@ -114,13 +117,15 @@ process variantRecalibrator {
             -tranches-file ${vcf.baseName}.recalibrated_INDEL.tranches \
             -recal-file ${vcf.baseName}.recalibrated_INDEL.recal \
             -mode INDEL \
-            -O ${vcf.baseName}.output_INDEL.vcf
+            -O ${vcf.baseName}.output_INDEL.vcf.gz
+            gatk IndexFeatureFile -I ${vcf.baseName}.output_INDEL.vcf.gz
     fi
 
     gatk MergeVcfs \
-        -I ${vcf.baseName}.output_SNP.vcf \
-        -I ${vcf.baseName}.output_INDEL.vcf \
-        -O ${vcf.baseName}.recalibrated.vcf
+        -I ${vcf.baseName}.output_SNP.vcf.gz \
+        -I ${vcf.baseName}.output_INDEL.vcf.gz \
+        -O ${vcf.baseName}.recalibrated.vcf.gz
+        ${vcf.baseName}.output_SNP.vcf.gz
 
     echo "VQSR Complete"
     """

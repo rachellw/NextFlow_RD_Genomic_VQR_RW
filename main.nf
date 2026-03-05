@@ -152,27 +152,29 @@ workflow {
         bqsr_ch = mapDamage_ch
     }
 
-    // Run HaplotypeCaller on BQSR files
-    if (params.variant_caller == "haplotype-caller") {
-        gvcf_ch = haplotypeCaller(bqsr_ch, indexed_genome_ch.collect()).collect()
-    }
 
+            // Run HaplotypeCaller on BQSR files
+    if (params.variant_caller == 'haplotype-caller') {
+    gvcf_ch = haplotypeCaller(bqsr_ch, indexed_genome_ch.collect())
+    }
+    else if (params.variant_caller == 'deepvariant') {
+        gvcf_ch = DEEPVARIANT(bqsr_ch, indexed_genome_ch.collect())
+    }
     // Now we map to create separate lists for sample IDs, VCF files, and index files
-    all_gvcf_ch = gvcf_ch
-        .collect { listOfTuples ->
-            def sample_ids = listOfTuples.collate(3).collect { it[0] }   // Collect sample IDs from every 3rd element
-            def vcf_files = listOfTuples.collate(3).collect { it[1] }    // Collect VCF files
-            def vcf_index_files = listOfTuples.collate(3).collect { it[2] } // Collect VCF index files
-            return tuple(sample_ids, vcf_files, vcf_index_files)
-        }
+   all_gvcf_ch = gvcf_ch
+  .collect()
+  .map { rows ->
+      tuple( rows*.getAt(0), rows*.getAt(1), rows*.getAt(2) )
+  }
 
     // Combine GVCFs
     combined_gvcf_ch = combineGVCFs(all_gvcf_ch, indexed_genome_ch.collect())
-
+    combined_gvcf_ch.view
+    final_vcf_ch     = genotypeGVCFs(combined_gvcf_ch, indexed_genome_ch.collect())
+    final_vcf_ch.view()
     // Run GenotypeGVCFs
     final_vcf_ch = genotypeGVCFs(combined_gvcf_ch, indexed_genome_ch.collect())
-
-    // Conditionally apply variant recalibration or filtering
+     // Conditionally apply variant recalibration or filtering
     if (params.variant_recalibration) {
         // Define a map of VCF files to resource options
         def resourceOptions = [
