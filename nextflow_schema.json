@@ -51,6 +51,12 @@
                     "default": "bwa-mem",
                     "enum": ["bwa-mem", "bwa-aln"]
                 },
+                "variant_caller": {
+                    "type": "string",
+                    "description": "Variant Caller to use (haplotype-caller or DeepVariant)",
+                    "default": "haplotype-caller",
+                    "enum": ["haplotype-caller", "DeepVariant"]
+                },
                 "fastqc": {
                     "type": "boolean",
                     "description": "Flag to indicate if FASTQC should be performed",
@@ -103,6 +109,7 @@
                 "variant_recalibration",
                 "identity_analysis",
                 "degraded_dna",
+                "variant_caller",
                 "max_memory",
                 "max_time",
                 "max_cpus"
