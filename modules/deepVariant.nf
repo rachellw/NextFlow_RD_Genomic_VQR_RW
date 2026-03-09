@@ -1,56 +1,61 @@
-// Use newest nextflow dsl
 nextflow.enable.dsl=2
 
 process DEEPVARIANT {
 
-   if (params.platform == 'local') {
-        label 'process_low'
-    } else if (params.platform == 'cloud') {
-        label 'process_high'
-    }
-    
+  label 'process_high'
   tag "$sample_id"
 
-  // DeepVariant official image (pin a version you like)
-  container 'google/deepvariant:1.6.1'
-
+  container 'google/deepvariant:1.9.0'
   publishDir "${params.outdir}/DEEPVARIANT", mode: 'copy'
 
   input:
-  tuple val(sample_id), path(bamFile), path(bamIndex)
-  path indexFiles
-  // optional: BED/intervals for WES, etc.
-  path intervals optional true
+    tuple val(sample_id), path(bamFile), path(bamIndex)
+    path indexFiles
 
-  output:
-  tuple val(sample_id), path("${sample_id}.deepvariant.vcf.gz"),  emit: vcf
-  tuple val(sample_id), path("${sample_id}.deepvariant.vcf.gz.tbi"), emit: tbi
-  // If you decide to run in gVCF mode you can emit gvcf as well (see note below)
+output:
+tuple val(sample_id),
+      path("${sample_id}.g.vcf.gz"),
+      path("${sample_id}.g.vcf.gz.tbi"),
+      emit: gvcf
+path("${sample_id}.vcf.gz"), optional: true, emit: vcf
+path("${sample_id}.vcf.gz.tbi"), optional: true, emit: vcf_tbi
 
   script:
-  // DeepVariant model type: WGS, WES, PACBIO, ONT_R104, etc.
-  def model = params.deepvariant_model ?: 'WGS'
-  def threads = task.cpus ?: 12
+def model  = params.deepvariant_model ?: 'WGS'
+def shards = (task.cpus ?: 8) as int
 
-  // In DV images, /opt/deepvariant/bin/run_deepvariant is the common entry
-  // We write outputs into the task work dir (relative filenames!)
-  def extraIntervalsArg = intervals ? "--regions ${intervals}" : ""
-  def shards = task.cpus as int
-  """
-  set -euo pipefail
+"""
+set -euo pipefail
 
-  echo "Running DeepVariant for ${sample_id}"
-  echo "Model: ${model}"
-  echo "Threads: ${threads}"
+echo "Running DeepVariant (gVCF) for ${sample_id}"
+echo "Model: ${model}"
+echo "Shards: ${shards}"
 
-  /opt/deepvariant/bin/run_deepvariant \\
-    --model_type=${model} \\
-    --ref=${ref_fasta} \\
-    --reads=${bam} \\
-    --output_vcf=${sample_id}.deepvariant.vcf.gz \\
-    --num_shards=${threads} \\
-    ${extraIntervalsArg}
+REF=\$(basename "${params.genome_file}")
+if [ ! -f "\$REF" ]; then
+  REF=\$(find -L . -maxdepth 1 \\( -name "*.fasta" -o -name "*.fa" \\) | head -n 1)
+fi
 
-  echo "DeepVariant complete"
-  """
+echo "Using reference: \$REF"
+ls -lh
+
+/opt/deepvariant/bin/run_deepvariant \\
+  --model_type=${model} \\
+  --ref="\$REF" \\
+  --reads="${bamFile}" \\
+  --output_vcf="${sample_id}.vcf.gz" \\
+  --output_gvcf="${sample_id}.g.vcf.gz" \\
+  --num_shards=${shards}
+
+if [ ! -f "${sample_id}.g.vcf.gz.tbi" ]; then
+  tabix -p vcf "${sample_id}.g.vcf.gz"
+fi
+
+if [ ! -f "${sample_id}.vcf.gz.tbi" ]; then
+  tabix -p vcf "${sample_id}.vcf.gz"
+fi
+
+echo "DeepVariant complete"
+"""
 }
+  

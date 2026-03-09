@@ -23,3 +23,5 @@ results/
         data/samples/
         dockerfiles/identityAnalysis/FASTqc/
         dockerfiles/identityAnalysis/indexGenome/
+        dockerfiles/
+        .DS_Store

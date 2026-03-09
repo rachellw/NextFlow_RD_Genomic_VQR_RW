@@ -22,7 +22,7 @@ process variantRecalibrator {
 
     script:
     def knownSitesArgsStr = knownSitesArgs.join(' ')
-    def degradedDna = params.degraded_dna == "true"
+    def degradedDna = params.degraded_dna
 
     """
     echo "Running VQSR"

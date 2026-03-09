@@ -31,7 +31,7 @@ process FASTP {
     if [ -f "${reads[0]}" ] && [ -f "${reads[1]}" ]; then
     fastp -i ${reads[0]} -I ${reads[1]} -o fastp_${sample_id}.R1.fq.gz -O fastp_${sample_id}.R2.fq.gz
     elif [ -f "${reads[0]}" ]; then
-       -i fastp ${reads[0]} -o fastp_${sample_id}
+        fastp -i ${reads[0]} -o fastp_${sample_id}.R1.fq.gz
     else
         echo "No valid [read files] found for sample ${sample_id}"
         exit 1
