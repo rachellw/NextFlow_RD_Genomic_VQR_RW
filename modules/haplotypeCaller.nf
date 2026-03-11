@@ -5,7 +5,7 @@ process haplotypeCaller {
     label 'process_low'
     container 'variantvalidator/gatk4:4.3.0.0'
     tag "$sample_id"
-
+    publishDir "${params.outdir}/gvcf", mode: 'copy'
     input:
     tuple val(sample_id), path(bamFile), path(bamIndex)
     path indexFiles
@@ -58,7 +58,7 @@ process haplotypeCaller {
     echo "Sample: ${sample_id} VCF: \${outputVcf}"
 
     gatk IndexFeatureFile -I "\${outputVcf}"
-
+    
     echo "Variant Calling for sample: ${sample_id} complete"
     """
 }
