@@ -6,7 +6,7 @@ log.info """\
     ============================================
           DNASeq Pipeline Configuration
     ============================================
-    entry point     : ${params.entry}
+  entry point : ${workflow.entryName}
     platform        : ${params.platform}
     samplesheet     : ${params.samplesheet}
     genome          : ${params.genome_file}
@@ -65,7 +65,7 @@ if (params.variant_caller == 'haplotype-caller') {
  } else if  (params.variant_caller == 'deepvariant') {
     include { DEEPVARIANT } from './modules/deepVariant'  
 } else {
-    error "Unsupported variant caller: ${params.variant_caller}. Please specify 'haplotype-caller' or 'DeepVariant'."
+    error "Unsupported variant caller: ${params.variant_caller}. Please specify 'haplotype-caller' or 'deepvariant'."
 }
 
 if (params.degraded_dna) {
@@ -178,7 +178,7 @@ else if (params.variant_caller == 'deepvariant') {
 
     // Combine GVCFs
     combined_gvcf_ch = combineGVCFs(all_gvcf_ch, indexed_genome_ch.collect())
-    combined_gvcf_ch.view ()
+    combined_gvcf_ch.view()
     final_vcf_ch     = genotypeGVCFs(combined_gvcf_ch, indexed_genome_ch.collect())
     final_vcf_ch.view()
  // Conditionally apply variant recalibration or filtering
