@@ -6,7 +6,7 @@ log.info """\
     ============================================
           DNASeq Pipeline Configuration
     ============================================
-  entry point : ${workflow.entryName}
+    entry point     : ${params.entry ?: 'main'}
     platform        : ${params.platform}
     samplesheet     : ${params.samplesheet}
     genome          : ${params.genome_file}
