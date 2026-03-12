@@ -141,7 +141,7 @@
         {
             "$ref": "#/definitions/inputs_outputs"
         }
-    ]
+    ],
     "allOf": [
   {
     "if": {
