@@ -140,4 +140,22 @@
             "$ref": "#/definitions/inputs_outputs"
         }
     ]
+    "allOf": [
+  {
+    "if": {
+      "properties": { "pipeline_start": { "const": "fastq" } }
+    },
+    "then": {
+      "required": ["samplesheet"]
+    }
+  },
+  {
+    "if": {
+      "properties": { "pipeline_start": { "const": "bam" } }
+    },
+    "then": {
+      "required": ["bam_samplesheet"]
+    }
+  }
+]
 }
