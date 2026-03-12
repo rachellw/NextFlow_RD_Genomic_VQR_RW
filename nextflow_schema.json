@@ -103,18 +103,20 @@
                       "help_text": "Tab-separated file with columns: sample_id, bam, bai",
                       "required": false
             },
-            "pipeline_start": {
-              "type": "string",
-              "description": "Pipeline starting point",
-              "default": "fastq",
-              "enum": [
-                "fastq",
-                "bam"
-              ],
-              "help_text": "Choose whether to start from FASTQ reads or deduplicated BAM files"
-            },
+            "entry": {
+            "type": "string",
+            "description": "Pipeline starting entry point",
+            "default": "main",
+            "enum": [
+            "main",
+            "FROM_DEDUP_BAM",
+            "FROM_GVCF",
+            "FASTQC_only"
+        ],
+        "help_text": "Select where the pipeline should start"
+},
             "required": [
-                 "pipeline_start",
+                "entry",
                 "platform",
                 "samplesheet",
                 "genome_index_files",
