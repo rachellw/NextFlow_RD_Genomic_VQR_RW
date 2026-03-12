@@ -17,12 +17,13 @@
                     "default": "local",
                     "enum": ["local", "cloud"]
                 },
+             
                 "samplesheet": {
-                    "type": "string",
-                    "description": "Samplesheet in tsv format",
-                    "default": "samplesheet",
-                    "format": "file-path"
-                },
+                  "type": "string",
+                      "format": "file-path",
+                      "description": "Samplesheet containing FASTQ files",
+                      "help_text": "Tab-separated file containing sample_id and FASTQ paths"
+                    }
                 "genome_index_files": {
                     "type": "string",
                     "description": "Genome index files directory",
