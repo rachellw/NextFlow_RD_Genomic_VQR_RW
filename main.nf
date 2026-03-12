@@ -253,7 +253,134 @@ else if (params.variant_caller == 'deepvariant') {
         identity_analysis_ch = identityAnalysis(filtered_vcf_ch, psam_file_ch)
     }
 }
+workflow FROM_DEDUP_BAM {
 
+    log.info "Starting pipeline from deduplicated BAM inputs"
+
+    // Reference genome/index handling
+    if (params.index_genome) {
+        indexed_genome_ch = indexGenome(params.genome_file).flatten()
+    }
+    else {
+        indexed_genome_ch = Channel.fromPath(params.genome_index_files)
+    }
+
+    // Resource VCFs
+    qsrc_vcf_ch = Channel.fromPath(params.qsrVcfs)
+
+    // Read BAM samplesheet: sample_id, bam, bai
+    bam_ch = Channel
+        .fromPath(params.bam_samplesheet)
+        .splitCsv(sep: '\t', header: false)
+        .map { row ->
+            if (row.size() < 3) {
+                error "BAM samplesheet must contain: sample_id, bam, bai"
+            }
+            tuple(row[0], file(row[1]), file(row[2]))
+        }
+
+    bam_ch.view()
+
+    // Optional degraded DNA branch
+    if (params.degraded_dna) {
+        pre_mapDamage_ch = mapDamage2(bam_ch, indexed_genome_ch.collect())
+        mapDamage_ch = indexMapDamageBam(pre_mapDamage_ch)
+    } else {
+        mapDamage_ch = bam_ch
+    }
+
+    // Known sites for BQSR
+    knownSites_ch = Channel.fromPath(params.qsrVcfs)
+        .filter { f ->
+            f.getName().endsWith('.vcf.gz') || f.getName().endsWith('.vcf')
+        }
+        .map { f -> "--known-sites ${f.getName()}" }
+        .collect()
+
+    // Optional BQSR
+    if (params.bqsr) {
+        bqsr_ch = baseRecalibrator(
+            mapDamage_ch,
+            knownSites_ch,
+            indexed_genome_ch.collect(),
+            qsrc_vcf_ch.collect()
+        )
+    } else {
+        bqsr_ch = mapDamage_ch
+    }
+
+    // Variant caller
+    if (params.variant_caller == 'haplotype-caller') {
+        hc_result = haplotypeCaller(bqsr_ch, indexed_genome_ch.collect())
+        gvcf_ch = hc_result.gvcf
+    }
+    else if (params.variant_caller == 'deepvariant') {
+        dv_result = DEEPVARIANT(bqsr_ch, indexed_genome_ch.collect())
+        gvcf_ch = dv_result.gvcf
+    }
+    else {
+        error "Unsupported variant caller: ${params.variant_caller}"
+    }
+
+    // Debug
+    gvcf_ch.view { x -> "GVCF_CH -> ${x}" }
+
+    // Combine sample gVCFs into cohort lists
+    all_gvcf_ch = gvcf_ch
+        .collect()
+        .map { rows ->
+            tuple(
+                rows.collect { it[0] },
+                rows.collect { it[1] },
+                rows.collect { it[2] }
+            )
+        }
+
+    all_gvcf_ch.view { x -> "ALL_GVCF_CH -> ${x}" }
+
+    // Combine GVCFs
+    combined_gvcf_ch = combineGVCFs(all_gvcf_ch, indexed_genome_ch.collect())
+
+    // Joint genotyping
+    final_vcf_ch = genotypeGVCFs(combined_gvcf_ch, indexed_genome_ch.collect())
+
+    // Final filtering or VQSR
+    if (params.variant_recalibration) {
+
+        def resourceOptions = [
+            'Homo_sapiens_assembly38.known_indels'       : 'known=true,training=false,truth=false,prior=15.0',
+            'hapmap_3.3.hg38'                            : 'known=false,training=false,truth=true,prior=15.0',
+            '1000G_omni2.5.hg38'                         : 'known=false,training=true,truth=false,prior=12.0',
+            '1000G_phase1.snps.high_confidence.hg38'     : 'known=true,training=true,truth=true,prior=10.0',
+            'Homo_sapiens_assembly38.dbsnp138'           : 'known=true,training=false,truth=false,prior=2.0',
+            'Mills_and_1000G_gold_standard.indels.hg38'  : 'known=true,training=true,truth=true,prior=12.0'
+        ]
+
+        knownSitesArgs_ch = Channel
+            .fromPath(params.qsrVcfs)
+            .filter { file ->
+                file.getName().endsWith('.vcf.gz') || file.getName().endsWith('.vcf')
+            }
+            .map { file ->
+                def baseName = file.getName().replaceAll(/\.vcf(\.gz)?$/, '')
+                def resourceArgs = resourceOptions.get(baseName) ?: ""
+                return "--resource:${baseName},${resourceArgs} ${file.getName()}"
+            }
+            .collect()
+
+        filtered_vcf_ch = variantRecalibrator(
+            final_vcf_ch,
+            knownSitesArgs_ch,
+            indexed_genome_ch.collect(),
+            qsrc_vcf_ch.collect()
+        )
+    }
+    else {
+        filtered_vcf_ch = filterVCF(final_vcf_ch, indexed_genome_ch.collect())
+    }
+
+    filtered_vcf_ch.view()
+}
 workflow FASTQC_only {
     // Set channel to gather read_pairs
     read_pairs_ch = Channel
