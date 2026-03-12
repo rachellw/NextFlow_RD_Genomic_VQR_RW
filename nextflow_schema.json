@@ -1,163 +1,167 @@
 {
-    "$schema": "http://json-schema.org/draft-07/schema",
-    "$id": "https://raw.githubusercontent.com/openvar/NextFlow_RD_Genomic_VQR/main/nextflow_schema.json",
-    "title": "Nextflow pipeline parameters",
-    "description": "This pipeline uses Nextflow and processes exome or genome data. The JSON Schema was built using the nf-core pipeline schema builder.",
-    "type": "object",
-    "definitions": {
-        "inputs_outputs": {
-            "title": "inputs_outputs",
-            "type": "object",
-            "description": "",
-            "default": "",
-            "properties": {
-                "platform": {
-                    "type": "string",
-                    "description": "Platform used to generate the data",
-                    "default": "local",
-                    "enum": ["local", "cloud"]
-                },
-             
-                "samplesheet": {
-                  "type": "string",
-                      "format": "file-path",
-                      "description": "Samplesheet containing FASTQ files",
-                      "help_text": "Tab-separated file containing sample_id and FASTQ paths"
-                    },
-                "genome_index_files": {
-                    "type": "string",
-                    "description": "Genome index files directory",
-                    "format": "directory-path"
-                },
-                "qsrVcfs": {
-                    "type": "string",
-                    "description": "Quality Score Recalibration files directory",
-                    "format": "directory-path"
-                },
-                "genome_file": {
-                    "type": "string",
-                    "description": "Genome fasta file",
-                    "default": "genome.fasta",
-                    "format": "file-path"
-                },
-                "outdir": {
-                    "type": "string",
-                    "description": "local output directory",
-                    "default": "./results",
-                    "format": "directory-path"
-                },
-                "aligner": {
-                    "type": "string",
-                    "description": "Aligner to use (bwa-mem or bwa-aln)",
-                    "default": "bwa-mem",
-                    "enum": ["bwa-mem", "bwa-aln"]
-                },
-                "variant_caller": {
-                    "type": "string",
-                    "description": "Variant Caller to use (haplotype-caller or DeepVariant)",
-                    "default": "haplotype-caller",
-                    "enum": ["haplotype-caller", "DeepVariant"]
-                },
-                "fastqc": {
-                    "type": "boolean",
-                    "description": "Flag to indicate if FASTQC should be performed",
-                    "default": false
-                },
-                
-                "fastp": {
-                    "type": "boolean",
-                    "description": "Flag to indicate if FASTP should be performed",
-                    "default": false
-                },
-
-                "index_genome": {
-                    "type": "boolean",
-                    "description": "Index the genome if not already done",
-                    "default": false
-                },
-                "degraded_dna": {
-                    "type": "boolean",
-                    "description": "Flag to indicate if degraded DNA analysis should be performed",
-                    "default": false
-                },
-                "bqsr": {
-                    "type": "boolean",
-                    "description": "Flag to indicate if Base Quality Score Recalibration should be performed",
-                    "default": false
-                },
-                "variant_recalibration": {
-                    "type": "boolean",
-                    "description": "Flag to indicate if variant recalibration should be performed",
-                    "default": false
-                },
-                "identity_analysis": {
-                    "type": "boolean",
-                    "description": "Flag to indicate if identity analysis should be performed",
-                    "default": false
-                }
-            },
-            "bam_samplesheet": {
-                      "type": "string",
-                      "format": "file-path",
-                      "description": "Samplesheet listing deduplicated BAM and BAI files",
-                      "help_text": "Tab-separated file with columns: sample_id, bam, bai",
-                      "required": false
-            },
-            "entry": {
-            "type": "string",
-            "description": "Pipeline starting entry point",
-            "default": "main",
-            "enum": [
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "https://raw.githubusercontent.com/rachellw/NextFlow_RD_Genomic_VQR_RW/entry_points/nextflow_schema.json",
+  "title": "Nextflow pipeline parameters",
+  "description": "This pipeline uses Nextflow and processes exome or genome data.",
+  "type": "object",
+  "definitions": {
+    "inputs_outputs": {
+      "title": "inputs_outputs",
+      "type": "object",
+      "properties": {
+        "entry": {
+          "type": "string",
+          "description": "Pipeline starting entry point",
+          "default": "main",
+          "enum": [
             "main",
             "FROM_DEDUP_BAM",
             "FROM_GVCF",
             "FASTQC_only"
-        ],
-        "help_text": "Select where the pipeline should start"
-},
-            "required": [
-                "entry",
-                "platform",
-                "samplesheet",
-                "genome_index_files",
-                "index_genome",
-                "genome_file",
-                "qsrVcfs",
-                "outdir",
-                "aligner",
-                "bqsr",
-                "fastqc",
-                "variant_recalibration",
-                "identity_analysis",
-                "degraded_dna",
-                "variant_caller",
-                "max_memory",
-                "max_time",
-                "max_cpus"
-            ]
+          ]
+        },
+        "platform": {
+          "type": "string",
+          "description": "Platform used to generate the data",
+          "default": "local",
+          "enum": ["local", "cloud"]
+        },
+        "samplesheet": {
+          "type": "string",
+          "format": "file-path",
+          "description": "Samplesheet containing FASTQ files"
+        },
+        "bam_samplesheet": {
+          "type": "string",
+          "format": "file-path",
+          "description": "Samplesheet listing deduplicated BAM and BAI files"
+        },
+        "gvcf_samplesheet": {
+          "type": "string",
+          "format": "file-path",
+          "description": "Samplesheet listing gVCF and gVCF index files"
+        },
+        "genome_index_files": {
+          "type": "string",
+          "description": "Genome index files directory",
+          "format": "directory-path"
+        },
+        "qsrVcfs": {
+          "type": "string",
+          "description": "Quality Score Recalibration files directory",
+          "format": "directory-path"
+        },
+        "genome_file": {
+          "type": "string",
+          "description": "Genome fasta file",
+          "default": "genome.fasta",
+          "format": "file-path"
+        },
+        "outdir": {
+          "type": "string",
+          "description": "Output directory",
+          "default": "./results",
+          "format": "directory-path"
+        },
+        "aligner": {
+          "type": "string",
+          "description": "Aligner to use",
+          "default": "bwa-mem",
+          "enum": ["bwa-mem", "bwa-aln"]
+        },
+        "variant_caller": {
+          "type": "string",
+          "description": "Variant caller to use",
+          "default": "haplotype-caller",
+          "enum": ["haplotype-caller", "deepvariant"]
+        },
+        "fastqc": {
+          "type": "boolean",
+          "description": "Run FASTQC",
+          "default": false
+        },
+        "fastp": {
+          "type": "boolean",
+          "description": "Run FASTP",
+          "default": false
+        },
+        "index_genome": {
+          "type": "boolean",
+          "description": "Index the genome if not already done",
+          "default": false
+        },
+        "degraded_dna": {
+          "type": "boolean",
+          "description": "Perform degraded DNA analysis",
+          "default": false
+        },
+        "bqsr": {
+          "type": "boolean",
+          "description": "Perform Base Quality Score Recalibration",
+          "default": false
+        },
+        "variant_recalibration": {
+          "type": "boolean",
+          "description": "Perform variant recalibration",
+          "default": false
+        },
+        "identity_analysis": {
+          "type": "boolean",
+          "description": "Perform identity analysis",
+          "default": false
         }
-    },
-    "allOf": [
-        {
-            "$ref": "#/definitions/inputs_outputs"
-        }
-    ],
-    "allOf": [
-  {
-    "if": {
-      "properties": { "pipeline_start": { "const": "fastq" } }
-    },
-    "then": {
-      "required": ["samplesheet"]
+      },
+      "required": [
+        "entry",
+        "platform",
+        "genome_index_files",
+        "index_genome",
+        "genome_file",
+        "qsrVcfs",
+        "outdir",
+        "aligner",
+        "bqsr",
+        "fastqc",
+        "variant_recalibration",
+        "identity_analysis",
+        "degraded_dna",
+        "variant_caller"
+      ]
     }
   },
-  {
-    "if": {
-      "properties": { "pipeline_start": { "const": "bam" } }
+  "allOf": [
+    {
+      "$ref": "#/definitions/inputs_outputs"
     },
-    "then": {
-      "required": ["bam_samplesheet"]
+    {
+      "if": {
+        "properties": {
+          "entry": { "const": "main" }
+        }
+      },
+      "then": {
+        "required": ["samplesheet"]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "entry": { "const": "FROM_DEDUP_BAM" }
+        }
+      },
+      "then": {
+        "required": ["bam_samplesheet"]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "entry": { "const": "FROM_GVCF" }
+        }
+      },
+      "then": {
+        "required": ["gvcf_samplesheet"]
+      }
     }
-  }
-]
+  ]
 }
