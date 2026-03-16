@@ -303,7 +303,7 @@ workflow FROM_DEDUP_BAM_NO_INDEX {
     // sample_id    bam
     bam_ch = Channel
         .fromPath(params.bam_no_index_samplesheet)
-        .splitCsv(sep: '\t', header: true)
+        .splitCsv(sep: '\t', header: false)
         .map { row ->
             tuple(row.sample_id, file(row.bam))
         }
@@ -557,10 +557,10 @@ workflow FROM_GVCF {
         indexed_genome_ch = Channel.fromPath(params.genome_index_files)
     }
 
-    // Read gVCF samplesheet
+    // Read gVCF samplesheets
     gvcf_ch = Channel
         .fromPath(params.gvcf_samplesheet)
-        .splitCsv(sep: '\t', header: true)
+        .splitCsv(sep: '\t', header: false)
         .map { row ->
             tuple(row.sample_id, file(row.gvcf), file(row.gvcf_index))
         }
