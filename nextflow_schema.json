@@ -9,17 +9,6 @@
       "title": "inputs_outputs",
       "type": "object",
       "properties": {
-        "entry": {
-          "type": "string",
-          "description": "Pipeline starting entry point",
-          "default": "main",
-          "enum": [
-            "main",
-            "FROM_DEDUP_BAM",
-            "FROM_GVCF",
-            "FASTQC_only"
-          ]
-        },
         "platform": {
           "type": "string",
           "description": "Platform used to generate the data",
@@ -30,6 +19,11 @@
           "type": "string",
           "format": "file-path",
           "description": "Samplesheet containing FASTQ files"
+        },
+        "bam_no_index_samplesheet": {
+          "type": "string",
+          "format": "file-path",
+          "description": "Samplesheet listing deduplicated BAM files without BAM index"
         },
         "bam_samplesheet": {
           "type": "string",
@@ -112,7 +106,6 @@
         }
       },
       "required": [
-        "entry",
         "platform",
         "genome_index_files",
         "index_genome",
@@ -134,34 +127,12 @@
       "$ref": "#/definitions/inputs_outputs"
     },
     {
-      "if": {
-        "properties": {
-          "entry": { "const": "main" }
-        }
-      },
-      "then": {
-        "required": ["samplesheet"]
-      }
-    },
-    {
-      "if": {
-        "properties": {
-          "entry": { "const": "FROM_DEDUP_BAM" }
-        }
-      },
-      "then": {
-        "required": ["bam_samplesheet"]
-      }
-    },
-    {
-      "if": {
-        "properties": {
-          "entry": { "const": "FROM_GVCF" }
-        }
-      },
-      "then": {
-        "required": ["gvcf_samplesheet"]
-      }
+      "oneOf": [
+        { "required": ["samplesheet"] },
+        { "required": ["bam_no_index_samplesheet"] },
+        { "required": ["bam_samplesheet"] },
+        { "required": ["gvcf_samplesheet"] }
+      ]
     }
   ]
 }
