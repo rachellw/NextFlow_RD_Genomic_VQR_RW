@@ -489,19 +489,23 @@ workflow FROM_DEDUP_BAM {
 
     // Debug
     gvcf_ch.view { x -> "GVCF_CH -> ${x}" }
+    gvcf_ch.view { x -> "GVCF_CH CLASS=${x.getClass().name} VALUE=${x}" }
 
     // Combine sample gVCFs into cohort lists
     all_gvcf_ch = gvcf_ch
-        .collect()
-        .map { rows ->
-            tuple(
-                rows.collect { it[0] },
-                rows.collect { it[1] },
-                rows.collect { it[2] }
-            )
+    .collect()
+    .map { rows ->
+        rows.each { r ->
+            assert r instanceof List : "gvcf_ch item is not a tuple/list: ${r} (${r.getClass().name})"
+            assert r.size() == 3 : "gvcf_ch item does not have 3 elements: ${r}"
         }
 
-    all_gvcf_ch.view { x -> "ALL_GVCF_CH -> ${x}" }
+        tuple(
+            rows.collect { it[0] },
+            rows.collect { it[1] },
+            rows.collect { it[2] }
+        )
+    }
 
     // Combine GVCFs
     combined_gvcf_ch = combineGVCFs(all_gvcf_ch, indexed_genome_ch.collect())
@@ -559,13 +563,18 @@ workflow FROM_GVCF {
 
     // Read gVCF samplesheets
     gvcf_ch = Channel
-        .fromPath(params.gvcf_samplesheet)
-        .splitCsv(sep: '\t', header: false)
-        .map { row ->
-            tuple(row.sample_id, file(row.gvcf), file(row.gvcf_index))
+    .fromPath(params.gvcf_samplesheet)
+    .splitCsv(sep: '\t', header: false)
+    .map { row ->
+        if (row.size() < 3) {
+            error "gVCF samplesheet must contain: sample_id, gvcf, gvcf_index. Got: ${row}"
         }
-
-    gvcf_ch.view()
+        tuple(
+            row[0].toString().trim(),
+            file(row[1].toString().trim()),
+            file(row[2].toString().trim())
+        )
+    }
 
     // Combine sample gVCFs into cohort lists
     all_gvcf_ch = gvcf_ch

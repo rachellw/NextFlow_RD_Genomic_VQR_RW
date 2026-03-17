@@ -17,6 +17,7 @@ tuple val(sample_id),
       path("${sample_id}.g.vcf.gz"),
       path("${sample_id}.g.vcf.gz.tbi"),
       emit: gvcf
+
 path("${sample_id}.vcf.gz"), optional: true, emit: vcf
 path("${sample_id}.vcf.gz.tbi"), optional: true, emit: vcf_tbi
 
