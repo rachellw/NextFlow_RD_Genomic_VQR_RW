@@ -562,20 +562,26 @@ workflow FROM_GVCF {
     }
 
     // Read gVCF samplesheets
-    gvcf_ch = Channel
+   gvcf_ch = Channel
     .fromPath(params.gvcf_samplesheet)
-    .splitCsv(sep: '\t', header: false)
-    .map { row ->
-        if (row.size() < 3) {
-            error "gVCF samplesheet must contain: sample_id, gvcf, gvcf_index. Got: ${row}"
+    .splitText()
+    .map { line -> line.trim() }
+    .filter { line -> line }
+    .map { line ->
+        def row = line.split('\t')
+
+        if (row.size() != 3) {
+            error "gVCF samplesheet must have exactly 3 tab-separated columns: sample_id, gvcf, gvcf_index. Got: ${line}"
         }
+
         tuple(
-            row[0].toString().trim(),
-            file(row[1].toString().trim()),
-            file(row[2].toString().trim())
+            row[0].trim(),
+            file(row[1].trim()),
+            file(row[2].trim())
         )
     }
 
+gvcf_ch.view { x -> "GVCF_CH -> class=${x.getClass().name} value=${x}" }
     // Combine sample gVCFs into cohort lists
     all_gvcf_ch = gvcf_ch
         .collect()
