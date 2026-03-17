@@ -187,16 +187,25 @@ workflow FROM_FASTQ {
     gvcf_ch.view { x -> "GVCF_CH -> ${x}" }
 
     // Combine sample gVCFs into cohort lists
-    all_gvcf_ch = gvcf_ch
-        .collect()
-        .map { rows ->
-            tuple(
-                rows.collect { it[0] },
-                rows.collect { it[1] },
-                rows.collect { it[2] }
-            )
+all_gvcf_ch = gvcf_ch
+    .collect()
+    .map { rows ->
+
+        // If there is only one sample, collect() may give a flat 3-item tuple.
+        def normalized_rows =
+            (rows instanceof List && rows.size() == 3 && !(rows[0] instanceof List)) ? [rows] : rows
+
+        normalized_rows.each { r ->
+            assert r instanceof List : "gvcf_ch item is not a tuple/list: ${r} (${r.getClass().name})"
+            assert r.size() == 3 : "gvcf_ch item does not have 3 elements: ${r}"
         }
 
+        tuple(
+            normalized_rows.collect { it[0] },
+            normalized_rows.collect { it[1] },
+            normalized_rows.collect { it[2] }
+        )
+    }
     all_gvcf_ch.view { x -> "ALL_GVCF_CH -> ${x}" }
 
     // Combine GVCFs
@@ -361,16 +370,25 @@ workflow FROM_DEDUP_BAM_NO_INDEX {
     gvcf_ch.view { x -> "GVCF_CH -> ${x}" }
 
     // Bundle sample gVCFs into cohort lists
-    all_gvcf_ch = gvcf_ch
-        .collect()
-        .map { rows ->
-            tuple(
-                rows.collect { it[0] },
-                rows.collect { it[1] },
-                rows.collect { it[2] }
-            )
+all_gvcf_ch = gvcf_ch
+    .collect()
+    .map { rows ->
+
+        // If there is only one sample, collect() may give a flat 3-item tuple.
+        def normalized_rows =
+            (rows instanceof List && rows.size() == 3 && !(rows[0] instanceof List)) ? [rows] : rows
+
+        normalized_rows.each { r ->
+            assert r instanceof List : "gvcf_ch item is not a tuple/list: ${r} (${r.getClass().name})"
+            assert r.size() == 3 : "gvcf_ch item does not have 3 elements: ${r}"
         }
 
+        tuple(
+            normalized_rows.collect { it[0] },
+            normalized_rows.collect { it[1] },
+            normalized_rows.collect { it[2] }
+        )
+    }
     all_gvcf_ch.view { x -> "ALL_GVCF_CH -> ${x}" }
 
     // Combine GVCFs
@@ -492,18 +510,23 @@ workflow FROM_DEDUP_BAM {
     gvcf_ch.view { x -> "GVCF_CH CLASS=${x.getClass().name} VALUE=${x}" }
 
     // Combine sample gVCFs into cohort lists
-    all_gvcf_ch = gvcf_ch
+  all_gvcf_ch = gvcf_ch
     .collect()
     .map { rows ->
-        rows.each { r ->
+
+        // If there is only one sample, collect() may give a flat 3-item tuple.
+        def normalized_rows =
+            (rows instanceof List && rows.size() == 3 && !(rows[0] instanceof List)) ? [rows] : rows
+
+        normalized_rows.each { r ->
             assert r instanceof List : "gvcf_ch item is not a tuple/list: ${r} (${r.getClass().name})"
             assert r.size() == 3 : "gvcf_ch item does not have 3 elements: ${r}"
         }
 
         tuple(
-            rows.collect { it[0] },
-            rows.collect { it[1] },
-            rows.collect { it[2] }
+            normalized_rows.collect { it[0] },
+            normalized_rows.collect { it[1] },
+            normalized_rows.collect { it[2] }
         )
     }
 
@@ -593,23 +616,28 @@ workflow FROM_GVCF {
 
     // Bundle sample gVCFs into cohort lists
     all_gvcf_ch = gvcf_ch
-        .collect()
-        .map { rows ->
-            assert rows instanceof List : "collect() did not return a list: ${rows} (${rows.getClass().name})"
-            rows.each { r ->
-                assert r instanceof List : "gvcf_ch item is not a tuple/list: ${r} (${r.getClass().name})"
-                assert r.size() == 3 : "gvcf_ch item does not have 3 elements: ${r}"
-            }
+    gvcf_ch.view { x -> "GVCF_CH -> ${x}" }
+    .collect()
+    .map { rows ->
 
-            tuple(
-                rows.collect { it[0] },
-                rows.collect { it[1] },
-                rows.collect { it[2] }
-            )
+        // If there is only one sample, collect() may give a flat 3-item tuple.
+        def normalized_rows =
+            (rows instanceof List && rows.size() == 3 && !(rows[0] instanceof List)) ? [rows] : rows
+
+        normalized_rows.each { r ->
+            assert r instanceof List : "gvcf_ch item is not a tuple/list: ${r} (${r.getClass().name})"
+            assert r.size() == 3 : "gvcf_ch item does not have 3 elements: ${r}"
         }
 
-    all_gvcf_ch.view { x -> "ALL_GVCF_CH -> ${x}" }
+        tuple(
+            normalized_rows.collect { it[0] },
+            normalized_rows.collect { it[1] },
+            normalized_rows.collect { it[2] }
+        )
+    }
 
+    all_gvcf_ch.view { x -> "ALL_GVCF_CH -> ${x}" }
+    
     // Combine gVCFs
     combined_gvcf_ch = combineGVCFs(all_gvcf_ch, indexed_genome_ch.collect())
 
