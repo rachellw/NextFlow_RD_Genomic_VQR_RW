@@ -553,6 +553,7 @@ workflow FROM_DEDUP_BAM {
 workflow FROM_GVCF {
 
     log.info "Starting pipeline from gVCF inputs"
+    log.info "USING MANUAL GVCF TSV PARSER V3"
 
     // Reference genome/index
     if (params.index_genome) {
@@ -561,31 +562,45 @@ workflow FROM_GVCF {
         indexed_genome_ch = Channel.fromPath(params.genome_index_files)
     }
 
-    // Read gVCF samplesheets
-   gvcf_ch = Channel
-    .fromPath(params.gvcf_samplesheet)
-    .splitText()
-    .map { line -> line.trim() }
-    .filter { line -> line }
-    .map { line ->
-        def row = line.split('\t')
+    qsrc_vcf_ch = Channel.fromPath(params.qsrVcfs)
 
-        if (row.size() != 3) {
-            error "gVCF samplesheet must have exactly 3 tab-separated columns: sample_id, gvcf, gvcf_index. Got: ${line}"
+    // Parse gVCF samplesheet manually to avoid splitCsv weirdness
+    gvcf_ch = Channel
+        .fromPath(params.gvcf_samplesheet)
+        .splitText()
+        .map { line -> line.trim() }
+        .filter { line -> line }
+        .map { line ->
+            def row = line.split('\t', -1)
+
+            if (row.size() != 3) {
+                error "gVCF samplesheet must have exactly 3 tab-separated columns: sample_id, gvcf, gvcf_index. Got: ${line}"
+            }
+
+            tuple(
+                row[0].trim(),
+                file(row[1].trim()),
+                file(row[2].trim())
+            )
+        }
+        .map { x ->
+            assert x instanceof List : "gvcf_ch item is not a tuple/list: ${x} (${x.getClass().name})"
+            assert x.size() == 3 : "gvcf_ch item does not have 3 elements: ${x}"
+            x
         }
 
-        tuple(
-            row[0].trim(),
-            file(row[1].trim()),
-            file(row[2].trim())
-        )
-    }
+    gvcf_ch.view { x -> "GVCF_CH -> class=${x.getClass().name} value=${x}" }
 
-gvcf_ch.view { x -> "GVCF_CH -> class=${x.getClass().name} value=${x}" }
-    // Combine sample gVCFs into cohort lists
+    // Bundle sample gVCFs into cohort lists
     all_gvcf_ch = gvcf_ch
         .collect()
         .map { rows ->
+            assert rows instanceof List : "collect() did not return a list: ${rows} (${rows.getClass().name})"
+            rows.each { r ->
+                assert r instanceof List : "gvcf_ch item is not a tuple/list: ${r} (${r.getClass().name})"
+                assert r.size() == 3 : "gvcf_ch item does not have 3 elements: ${r}"
+            }
+
             tuple(
                 rows.collect { it[0] },
                 rows.collect { it[1] },
@@ -593,14 +608,13 @@ gvcf_ch.view { x -> "GVCF_CH -> class=${x.getClass().name} value=${x}" }
             )
         }
 
-    all_gvcf_ch.view()
+    all_gvcf_ch.view { x -> "ALL_GVCF_CH -> ${x}" }
 
     // Combine gVCFs
     combined_gvcf_ch = combineGVCFs(all_gvcf_ch, indexed_genome_ch.collect())
 
     // Joint genotyping
     final_vcf_ch = genotypeGVCFs(combined_gvcf_ch, indexed_genome_ch.collect())
-
     final_vcf_ch.view()
 
     // Variant filtering
@@ -614,8 +628,6 @@ gvcf_ch.view { x -> "GVCF_CH -> class=${x.getClass().name} value=${x}" }
             'Homo_sapiens_assembly38.dbsnp138'          : 'known=true,training=false,truth=false,prior=2.0',
             'Mills_and_1000G_gold_standard.indels.hg38' : 'known=true,training=true,truth=true,prior=12.0'
         ]
-
-        qsrc_vcf_ch = Channel.fromPath(params.qsrVcfs)
 
         knownSitesArgs_ch = Channel
             .fromPath(params.qsrVcfs)
@@ -637,13 +649,12 @@ gvcf_ch.view { x -> "GVCF_CH -> class=${x.getClass().name} value=${x}" }
         )
 
     } else {
-
         filtered_vcf_ch = filterVCF(final_vcf_ch, indexed_genome_ch.collect())
-
     }
 
     filtered_vcf_ch.view()
 }
+
 workflow FASTQC_only {
     // Set channel to gather read_pairs
     read_pairs_ch = Channel
