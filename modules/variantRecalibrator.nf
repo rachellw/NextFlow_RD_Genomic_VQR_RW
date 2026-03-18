@@ -35,8 +35,8 @@ process variantRecalibrator {
 
     echo "Genome File: \${genomeFasta}"
 
-    if [[ -e "\${genomeFasta}.dict" ]]; then
-        mv "\${genomeFasta}.dict" "\${genomeFasta%.*}.dict"
+   if [[ -f "${genomeFasta}.dict" && ! -f "${genomeFasta%.*}.dict" ]]; then
+    ln -s "${genomeFasta}.dict" "${genomeFasta%.*}.dict"
     fi
 
     if ${degradedDna}; then
@@ -59,7 +59,7 @@ process variantRecalibrator {
             -recal-file ${vcf.baseName}.recalibrated_SNP.recal \
             -mode SNP \
             -O ${vcf.baseName}.output_SNP.vcf.gz
-            gatk IndexFeatureFile -I output_SNP.vcf.gz
+            gatk IndexFeatureFile -I ${vcf.baseName}.output_SNP.vcf.gz
         # relaxed parameters for INDELs
         gatk VariantRecalibrator \
             -R "\${genomeFasta}" \
