@@ -9,20 +9,23 @@ process indexGenome {
     } else if (params.platform == 'cloud') {
         label 'process_medium'
     }
+
     container 'variantvalidator/indexgenome:1.1.0'
 
-
-    // Publish indexed files to the specified directory
-    publishDir("$params.outdir/GENOME_IDX", mode: "copy")
+    publishDir("${params.outdir}/GENOME_IDX", mode: "copy")
 
     input:
     path genomeFasta
 
     output:
-    tuple path(genomeFasta), path("${genomeFasta}.*")
+    tuple path(genomeFasta),
+          path("${genomeFasta}.*"),
+          path("${genomeFasta.baseName}.dict")
 
     script:
     """
+    set -euo pipefail
+
     echo "Running Index Genome"
 
     # Generate BWA index
@@ -31,8 +34,10 @@ process indexGenome {
     # Generate samtools faidx
     samtools faidx "${genomeFasta}"
 
-    # Generate Fasta dict
-    picard CreateSequenceDictionary R="${genomeFasta}" O="${genomeFasta}.dict"
+    # Generate GATK/Picard sequence dictionary with correct name
+    picard CreateSequenceDictionary \
+        R="${genomeFasta}" \
+        O="${genomeFasta.baseName}.dict"
 
     echo "Genome Indexing complete."
     """
