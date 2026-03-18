@@ -35,9 +35,9 @@ process variantRecalibrator {
 
     echo "Genome File: \${genomeFasta}"
 
-   if [[ -f "${genomeFasta}.dict" && ! -f "${genomeFasta%.*}.dict" ]]; then
-    ln -s "${genomeFasta}.dict" "${genomeFasta%.*}.dict"
-    fi
+  if [[ -f "\${genomeFasta}.dict" && ! -f "\${genomeFasta%.*}.dict" ]]; then
+    ln -s "\${genomeFasta}.dict" "\${genomeFasta%.*}.dict"
+fi
 
     if ${degradedDna}; then
         echo "Running VQSR for degraded DNA (1x coverage)"

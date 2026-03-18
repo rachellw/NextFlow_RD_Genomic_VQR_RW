@@ -18,9 +18,9 @@ process genotypeGVCFs {
     set -euo pipefail
     REF=\$(basename "${params.genome_file}")
     # GATK expects basename.dict, not basename.fasta.dict
-    if [[ -f "${REF}.dict" && ! -f "${REF%.*}.dict" ]]; then
-    ln -s "${REF}.dict" "${REF%.*}.dict"
-    fi  
+  if [[ -f "\${REF}.dict" && ! -f "\${REF%.*}.dict" ]]; then
+    ln -s "\${REF}.dict" "\${REF%.*}.dict"
+  fi
     gatk GenotypeGVCFs \\
       -R "\$REF" \\
       -V ${cohort_gvcf} \\
