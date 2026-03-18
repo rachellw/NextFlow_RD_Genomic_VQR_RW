@@ -311,11 +311,18 @@ workflow FROM_DEDUP_BAM_NO_INDEX {
     // Samplesheet format:
     // sample_id    bam
     bam_ch = Channel
-        .fromPath(params.bam_no_index_samplesheet)
-        .splitCsv(sep: '\t', header: false)
-        .map { row ->
-            tuple(row.sample_id, file(row.bam))
+    .fromPath(params.bam_no_index_samplesheet)
+    .splitCsv(sep: '\t', header: false)
+    .map { row ->
+        if (row.size() != 2) {
+            error "BAM no-index samplesheet must have exactly 2 columns: sample_id, bam. Got: ${row}"
         }
+
+        tuple(
+            row[0].toString().trim(),
+            file(row[1].toString().trim())
+        )
+    }
 
     bam_ch.view { x -> "DEDUP_BAM_CH -> ${x}" }
 
